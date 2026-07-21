@@ -4,6 +4,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // GitHub Pages serves this repo from a subpath: etesor.github.io/savings/
+  base: '/savings/',
   plugins: [
     react(),
     VitePWA({
