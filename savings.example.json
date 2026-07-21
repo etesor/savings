@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "currency": "MXN",
+  "locale": "es-MX",
+  "buckets": [
+    {
+      "id": "example-emergencia",
+      "name": "Fondo de emergencia",
+      "goalAmount": 150000,
+      "account": "bank",
+      "color": "#16a34a",
+      "sortOrder": 0,
+      "archived": false,
+      "createdAt": "2026-01-15T00:00:00.000Z"
+    },
+    {
+      "id": "example-berlin",
+      "name": "Berlin",
+      "goalAmount": 80000,
+      "account": "broker",
+      "color": "#2563eb",
+      "sortOrder": 1,
+      "archived": false,
+      "createdAt": "2026-01-15T00:00:00.000Z"
+    }
+  ],
+  "movements": [
+    {
+      "id": "m1",
+      "bucketId": "example-emergencia",
+      "date": "2026-01-15",
+      "amount": 30000,
+      "kind": "initial",
+      "note": "Saldo inicial",
+      "createdAt": "2026-01-15T00:00:00.000Z"
+    },
+    {
+      "id": "m2",
+      "bucketId": "example-emergencia",
+      "date": "2026-02-01",
+      "amount": 20000,
+      "kind": "deposit",
+      "note": "Ahorro mensual",
+      "createdAt": "2026-02-01T00:00:00.000Z"
+    },
+    {
+      "id": "m3",
+      "bucketId": "example-emergencia",
+      "date": "2026-03-10",
+      "amount": -8000,
+      "kind": "withdrawal",
+      "note": "Reparación del coche",
+      "createdAt": "2026-03-10T00:00:00.000Z"
+    },
+    {
+      "id": "m4",
+      "bucketId": "example-berlin",
+      "date": "2026-01-15",
+      "amount": 40000,
+      "kind": "initial",
+      "note": "Saldo inicial",
+      "createdAt": "2026-01-15T00:00:00.000Z"
+    }
+  ]
+}
