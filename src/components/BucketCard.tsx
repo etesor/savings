@@ -20,8 +20,8 @@ interface BucketCardProps {
   locale: string;
   expanded: boolean;
   onToggleExpand: () => void;
-  onAdd: () => void;
-  onWithdraw: () => void;
+  onSetBalance: () => void;
+  onMovement: () => void;
   onEdit: () => void;
   onEditMovement: (movement: Movement) => void;
   onDeleteMovement: (id: string) => void;
@@ -35,8 +35,8 @@ export function BucketCard({
   locale,
   expanded,
   onToggleExpand,
-  onAdd,
-  onWithdraw,
+  onSetBalance,
+  onMovement,
   onEdit,
   onEditMovement,
   onDeleteMovement,
@@ -96,11 +96,11 @@ export function BucketCard({
       </div>
 
       <div className="card-actions">
-        <button type="button" className="btn small primary" onClick={onAdd}>
-          + Agregar
+        <button type="button" className="btn small primary" onClick={onSetBalance}>
+          Actualizar saldo
         </button>
-        <button type="button" className="btn small" onClick={onWithdraw}>
-          − Retirar
+        <button type="button" className="btn small" onClick={onMovement}>
+          Movimiento
         </button>
         <button type="button" className="btn small ghost" onClick={onToggleExpand}>
           {expanded ? 'Ocultar' : 'Historial'}

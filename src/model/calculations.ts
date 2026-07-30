@@ -3,6 +3,11 @@
 
 import type { Account, AppData, Movement } from './types';
 
+/** Round to cents, so sums of decimal amounts don't drift into float noise. */
+export function roundMoney(amount: number): number {
+  return Math.round(amount * 100) / 100;
+}
+
 /** Sum of all movements for a single bucket. */
 export function balanceOf(bucketId: string, movements: Movement[]): number {
   let sum = 0;
@@ -10,6 +15,24 @@ export function balanceOf(bucketId: string, movements: Movement[]): number {
     if (m.bucketId === bucketId) sum += m.amount;
   }
   return sum;
+}
+
+/**
+ * A bucket's balance at the end of a given day (YYYY-MM-DD). This is the baseline
+ * a "the balance is now X" entry is measured against — using today's balance
+ * instead would silently mis-state the delta whenever the date is backdated.
+ */
+export function balanceAsOf(bucketId: string, date: string, movements: Movement[]): number {
+  let sum = 0;
+  for (const m of movements) {
+    if (m.bucketId === bucketId && m.date <= date) sum += m.amount;
+  }
+  return roundMoney(sum);
+}
+
+/** Whether the bucket has movements dated after `date` (so its balance moved on since then). */
+export function hasMovementsAfter(bucketId: string, date: string, movements: Movement[]): boolean {
+  return movements.some((m) => m.bucketId === bucketId && m.date > date);
 }
 
 /** Map of bucketId -> current balance, for the whole dataset in one pass. */
@@ -75,18 +98,20 @@ export function monthKeyOf(date: Date): string {
 }
 
 /**
- * Net amount actually *saved* during a given month (YYYY-MM), across active buckets.
- * Excludes seeded "initial" balances so the figure reflects real new effort, and
- * subtracts withdrawals (a month where you took money out saved less).
+ * How much the total balance moved during a given month (YYYY-MM), across active
+ * buckets. Excludes seeded "initial" balances, which are a starting point rather
+ * than a change. Deposits count up, withdrawals count down — and for investment
+ * buckets this includes whatever the market did, since the app tracks how much
+ * you *have*, not where each peso came from.
  */
-export function savedInMonth(data: AppData, monthKey: string): number {
+export function changeInMonth(data: AppData, monthKey: string): number {
   const active = new Set(data.buckets.filter((b) => !b.archived).map((b) => b.id));
   let sum = 0;
   for (const m of data.movements) {
     if (m.kind === 'initial') continue;
     if (active.has(m.bucketId) && m.date.slice(0, 7) === monthKey) sum += m.amount;
   }
-  return sum;
+  return roundMoney(sum);
 }
 
 export type GoalStatus = 'empty' | 'far' | 'mid' | 'close' | 'reached';

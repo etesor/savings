@@ -16,7 +16,12 @@ that **you** own — nothing is ever uploaded to a server.
 ## Features
 
 - Create savings **buckets** with a goal and account (bank or investment/broker).
-- Record **deposits and withdrawals** — each one is a dated entry in an append-only log.
+- Update a bucket two ways, whichever matches what you have in front of you:
+  - **Actualizar saldo** — type the balance you see in your bank account and the app
+    works out the movement for you. This is the default: it's what you can read off a
+    statement without remembering what changed since last time.
+  - **Movimiento** — record a deposit or withdrawal directly, when you know the amount.
+- Either way it's the same thing underneath: one dated, signed entry in an append-only log.
 - **Historical view** per bucket (balance over time) — because balances are *derived* from
   the log, your history is captured automatically from day one.
 - **Overall total** across all buckets, split by bank vs. investment.

@@ -7,7 +7,7 @@ import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { BucketCard } from './components/BucketCard';
 import { BucketForm } from './components/BucketForm';
-import { MovementForm } from './components/MovementForm';
+import { MovementForm, type EntryMode } from './components/MovementForm';
 import { FileGate } from './components/FileGate';
 import { Modal } from './components/Modal';
 import { UndoToast } from './components/UndoToast';
@@ -17,7 +17,7 @@ type ModalState =
   | { kind: 'none' }
   | { kind: 'bucket-create' }
   | { kind: 'bucket-edit'; bucket: Bucket }
-  | { kind: 'movement'; bucket: Bucket; sign: 'deposit' | 'withdrawal' }
+  | { kind: 'movement'; bucket: Bucket; mode: EntryMode }
   | { kind: 'movement-edit'; bucket: Bucket; movement: Movement };
 
 function Shell() {
@@ -136,8 +136,8 @@ function Shell() {
                   locale={data.locale}
                   expanded={expanded.has(bucket.id)}
                   onToggleExpand={() => toggleExpand(bucket.id)}
-                  onAdd={() => setModal({ kind: 'movement', bucket, sign: 'deposit' })}
-                  onWithdraw={() => setModal({ kind: 'movement', bucket, sign: 'withdrawal' })}
+                  onSetBalance={() => setModal({ kind: 'movement', bucket, mode: 'balance' })}
+                  onMovement={() => setModal({ kind: 'movement', bucket, mode: 'delta' })}
                   onEdit={() => setModal({ kind: 'bucket-edit', bucket })}
                   onEditMovement={(movement) => setModal({ kind: 'movement-edit', bucket, movement })}
                   onDeleteMovement={removeMovement}
@@ -178,9 +178,10 @@ function Shell() {
           <MovementForm
             bucket={modal.bucket}
             currentBalance={balances.get(modal.bucket.id) ?? 0}
+            movements={data.movements}
             currency={data.currency}
             locale={data.locale}
-            defaultSign={modal.sign}
+            defaultMode={modal.mode}
             onSubmit={addMovement}
             onClose={() => setModal({ kind: 'none' })}
           />
@@ -192,6 +193,7 @@ function Shell() {
           <MovementForm
             bucket={modal.bucket}
             currentBalance={balances.get(modal.bucket.id) ?? 0}
+            movements={data.movements}
             currency={data.currency}
             locale={data.locale}
             movement={modal.movement}

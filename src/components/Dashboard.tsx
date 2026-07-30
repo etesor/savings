@@ -1,12 +1,12 @@
 import type { AppData } from '../model/types';
 import {
   balanceByAccount,
+  changeInMonth,
   goalProgress,
   goalStatus,
   monthKeyOf,
   overallHistorySeries,
   remainingToGoal,
-  savedInMonth,
   totalBalance,
   totalGoal,
 } from '../model/calculations';
@@ -30,9 +30,9 @@ export function Dashboard({ data }: DashboardProps) {
   const { currency, locale } = data;
 
   const now = new Date();
-  const savedThisMonth = savedInMonth(data, monthKeyOf(now));
+  const changeThisMonth = changeInMonth(data, monthKeyOf(now));
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const savedLastMonth = savedInMonth(data, monthKeyOf(prevMonth));
+  const changeLastMonth = changeInMonth(data, monthKeyOf(prevMonth));
 
   const points = overallHistorySeries(data);
 
@@ -68,14 +68,14 @@ export function Dashboard({ data }: DashboardProps) {
 
       <div className="dash-momentum">
         <div className="mo-item">
-          <span className="muted small">Ahorrado este mes</span>
-          <strong className={savedThisMonth > 0 ? 'mo-pos' : savedThisMonth < 0 ? 'mo-neg' : ''}>
-            {formatSignedCurrency(savedThisMonth, currency, locale)}
+          <span className="muted small">Cambio este mes</span>
+          <strong className={changeThisMonth > 0 ? 'mo-pos' : changeThisMonth < 0 ? 'mo-neg' : ''}>
+            {formatSignedCurrency(changeThisMonth, currency, locale)}
           </strong>
         </div>
         <div className="mo-item">
           <span className="muted small">Mes pasado</span>
-          <strong className="muted">{formatSignedCurrency(savedLastMonth, currency, locale)}</strong>
+          <strong className="muted">{formatSignedCurrency(changeLastMonth, currency, locale)}</strong>
         </div>
       </div>
 
