@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { Account, AppData, Bucket, Movement, MovementKind } from '../model/types';
+import type { Account, AppData, Bucket, GoalType, Movement, MovementKind } from '../model/types';
 import { createEmptyData } from '../model/types';
 import { todayISO } from '../model/format';
 import * as storage from '../storage/storage';
@@ -80,6 +80,7 @@ function reducer(state: AppData, action: Action): AppData {
 export interface NewBucketInput {
   name: string;
   goalAmount: number;
+  goalType: GoalType;
   account: Account;
   color: string;
   initialAmount?: number;
@@ -284,6 +285,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       id: uid(),
       name: input.name.trim(),
       goalAmount: input.goalAmount,
+      goalType: input.goalType,
       account: input.account,
       color: input.color,
       sortOrder: nextSortOrder(data.buckets),

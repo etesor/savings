@@ -396,6 +396,8 @@
 
 /* ------- Progress bar ------- */
 .progress {
+  display: flex;
+  gap: 2px;
   height: 9px;
   background: var(--surface-2);
   border-radius: 999px;
@@ -408,6 +410,19 @@
   background: var(--status);
   border-radius: 999px;
   transition: width 0.4s ease;
+}
+/* Already spent on the goal: same colour, hatched, so it reads as "done and gone"
+   next to the solid segment of cash you still have. */
+.progress-fill.spent {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--status) 55%, transparent) 0 3px,
+    color-mix(in srgb, var(--status) 16%, transparent) 3px 6px
+  );
+}
+.spent-line {
+  font-size: 0.8rem;
+  margin-top: 0.4rem;
 }
 .status-label {
   font-size: 0.8rem;
@@ -624,10 +639,11 @@ button.mv-note:hover {
   border: none;
   background: var(--surface);
   color: var(--muted);
-  padding: 0.55rem;
+  padding: 0.55rem 0.4rem;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 550;
+  line-height: 1.25; /* the goal-type and purpose labels wrap to two lines when narrow */
 }
 .seg.active {
   background: var(--primary);

@@ -1,5 +1,11 @@
 import type { Bucket, Movement } from '../model/types';
-import { goalProgress, goalStatus, historySeries, remainingToGoal } from '../model/calculations';
+import {
+  fundedOf,
+  goalProgress,
+  goalStatus,
+  historySeries,
+  remainingToGoal,
+} from '../model/calculations';
 import { accountLabel, formatCurrency, formatDate, formatPercent, formatSignedCurrency } from '../model/format';
 import { ProgressBar } from './ProgressBar';
 import { HistoryChart } from './HistoryChart';
@@ -15,6 +21,7 @@ const STATUS_LABEL: Record<string, string> = {
 interface BucketCardProps {
   bucket: Bucket;
   balance: number;
+  spent: number; // already spent on this bucket's purpose (positive)
   movements: Movement[]; // all movements (filtered inside for this bucket)
   currency: string;
   locale: string;
@@ -30,6 +37,7 @@ interface BucketCardProps {
 export function BucketCard({
   bucket,
   balance,
+  spent,
   movements,
   currency,
   locale,
@@ -41,10 +49,14 @@ export function BucketCard({
   onEditMovement,
   onDeleteMovement,
 }: BucketCardProps) {
-  const progress = goalProgress(bucket.goalAmount, balance);
+  // The big number is cash on hand; the goal line and the bar measure what's
+  // covered, which for a 'target' bucket includes what already went to its purpose.
+  const covered = fundedOf(bucket, balance, spent);
+  const countedSpent = covered - balance; // 0 for ongoing funds, where spends don't count
+  const progress = goalProgress(bucket.goalAmount, covered);
   const status = goalStatus(progress);
-  const remaining = remainingToGoal(bucket.goalAmount, balance);
-  const excess = balance - bucket.goalAmount;
+  const remaining = remainingToGoal(bucket.goalAmount, covered);
+  const excess = covered - bucket.goalAmount;
   const points = historySeries(bucket.id, movements);
   const recent = movements
     .filter((m) => m.bucketId === bucket.id)
@@ -90,7 +102,19 @@ export function BucketCard({
         )}
       </div>
 
-      {bucket.goalAmount > 0 && <ProgressBar progress={progress} status={status} />}
+      {bucket.goalAmount > 0 && (
+        <ProgressBar
+          progress={progress}
+          status={status}
+          spentProgress={goalProgress(bucket.goalAmount, countedSpent)}
+        />
+      )}
+      {countedSpent > 0 && (
+        <div className="spent-line muted">
+          {formatCurrency(balance, currency, locale)} disponibles ·{' '}
+          <strong>{formatCurrency(countedSpent, currency, locale)}</strong> ya gastados
+        </div>
+      )}
       <div className="status-label" data-status={status}>
         {STATUS_LABEL[status]}
       </div>
@@ -160,6 +184,8 @@ function movementKindLabel(kind: Movement['kind']): string {
       return 'Depósito';
     case 'withdrawal':
       return 'Retiro';
+    case 'spend':
+      return 'Gastado en la meta';
     case 'transfer':
       return 'Transferencia';
     default:

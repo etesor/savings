@@ -1,7 +1,7 @@
 // Pure functions that derive every number the UI shows from the movement log.
 // No state, no side effects — easy to reason about and to test.
 
-import type { Account, AppData, Movement } from './types';
+import type { Account, AppData, Bucket, Movement } from './types';
 
 /** Round to cents, so sums of decimal amounts don't drift into float noise. */
 export function roundMoney(amount: number): number {
@@ -45,6 +45,45 @@ export function bucketBalances(data: AppData): Map<string, number> {
   return map;
 }
 
+/**
+ * Money that left a bucket *for the thing it was saved for*, as a positive number.
+ * Spends are stored negative like any other outflow, so the sign is flipped here —
+ * which also means a refunded spend (entered positive) subtracts back out on its own.
+ */
+export function spentOf(bucketId: string, movements: Movement[]): number {
+  let sum = 0;
+  for (const m of movements) {
+    if (m.bucketId === bucketId && m.kind === 'spend') sum -= m.amount;
+  }
+  return roundMoney(sum);
+}
+
+/** Map of bucketId -> amount spent on its purpose, for the whole dataset in one pass. */
+export function bucketSpent(data: AppData): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const b of data.buckets) map.set(b.id, 0);
+  for (const m of data.movements) {
+    if (m.kind !== 'spend') continue;
+    map.set(m.bucketId, (map.get(m.bucketId) ?? 0) - m.amount);
+  }
+  for (const [id, value] of map) map.set(id, roundMoney(value));
+  return map;
+}
+
+/**
+ * How much of the goal has actually been taken care of — the number the progress
+ * bar measures. For a 'target' bucket it's the cash still sitting there plus
+ * whatever already went to its purpose, so paying for the trip doesn't undo the
+ * saving. For an 'ongoing' fund only the cash counts, because spending it leaves
+ * you with a hole to refill.
+ *
+ * Note this collapses to plain `balance` for any bucket with no spends, which is
+ * every bucket in a file written before spends existed.
+ */
+export function fundedOf(bucket: Bucket, balance: number, spent: number): number {
+  return bucket.goalType === 'ongoing' ? roundMoney(balance) : roundMoney(balance + spent);
+}
+
 interface TotalsOptions {
   includeArchived?: boolean;
 }
@@ -81,15 +120,31 @@ export function totalGoal(data: AppData, opts: TotalsOptions = {}): number {
   return sum;
 }
 
+/**
+ * Total covered across all (active) buckets — the counterpart to totalGoal, and
+ * what the dashboard bar measures. Differs from totalBalance only by the spends
+ * that still count toward a goal, so the overall bar agrees with the cards.
+ */
+export function totalFunded(data: AppData, opts: TotalsOptions = {}): number {
+  const balances = bucketBalances(data);
+  const spents = bucketSpent(data);
+  let sum = 0;
+  for (const b of data.buckets) {
+    if (!opts.includeArchived && b.archived) continue;
+    sum += fundedOf(b, balances.get(b.id) ?? 0, spents.get(b.id) ?? 0);
+  }
+  return roundMoney(sum);
+}
+
 /** Fraction of the goal reached. Can exceed 1 when over-funded. */
-export function goalProgress(goalAmount: number, balance: number): number {
-  if (goalAmount <= 0) return balance > 0 ? 1 : 0;
-  return balance / goalAmount;
+export function goalProgress(goalAmount: number, covered: number): number {
+  if (goalAmount <= 0) return covered > 0 ? 1 : 0;
+  return covered / goalAmount;
 }
 
 /** How much is still needed to hit the goal (never negative). */
-export function remainingToGoal(goalAmount: number, balance: number): number {
-  return Math.max(0, goalAmount - balance);
+export function remainingToGoal(goalAmount: number, covered: number): number {
+  return Math.max(0, goalAmount - covered);
 }
 
 /** YYYY-MM for a date, in local time. */

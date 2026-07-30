@@ -121,6 +121,11 @@ function fillBucket(b: Bucket, index: number): Bucket {
     id: b.id,
     name: b.name,
     goalAmount: b.goalAmount,
+    // Files written before goal types existed have no spends, so 'target' and
+    // 'ongoing' would compute identically for them — defaulting to 'target'
+    // keeps every number unchanged, and the first withdrawal on a bucket that's
+    // really a standing fund surfaces the question that prompts a correction.
+    goalType: b.goalType === 'ongoing' ? 'ongoing' : 'target',
     account: b.account,
     color: typeof b.color === 'string' && b.color ? b.color : '#2563eb',
     sortOrder: typeof b.sortOrder === 'number' ? b.sortOrder : index,

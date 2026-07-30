@@ -7,7 +7,7 @@ export const APP_NAME = 'Ahorros';
 export const DATA_FILE_NAME = 'savings.json';
 
 /** Bumped whenever the shape of the persisted data changes (see migrations). */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Defaults for a brand-new data file. Stored inside the file so each user can change them. */
 export const DEFAULT_CURRENCY = 'MXN';

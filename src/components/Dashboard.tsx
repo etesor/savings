@@ -7,7 +7,9 @@ import {
   monthKeyOf,
   overallHistorySeries,
   remainingToGoal,
+  roundMoney,
   totalBalance,
+  totalFunded,
   totalGoal,
 } from '../model/calculations';
 import { formatCurrency, formatPercent, formatSignedCurrency } from '../model/format';
@@ -23,9 +25,13 @@ interface DashboardProps {
 export function Dashboard({ data }: DashboardProps) {
   const total = totalBalance(data);
   const goal = totalGoal(data);
-  const progress = goalProgress(goal, total);
+  // "Ahorro total" stays cash on hand, but the bar under it measures what's covered
+  // — otherwise it would contradict the cards below whenever a goal was spent on.
+  const covered = totalFunded(data);
+  const spentTowardGoals = roundMoney(covered - total);
+  const progress = goalProgress(goal, covered);
   const status = goalStatus(progress);
-  const remaining = remainingToGoal(goal, total);
+  const remaining = remainingToGoal(goal, covered);
   const byAccount = balanceByAccount(data);
   const { currency, locale } = data;
 
@@ -44,11 +50,15 @@ export function Dashboard({ data }: DashboardProps) {
           <div className="dash-amount">{formatCurrency(total, currency, locale)}</div>
           {goal > 0 && (
             <div className="dash-goal">
-              <ProgressBar progress={progress} status={status} />
+              <ProgressBar
+                progress={progress}
+                status={status}
+                spentProgress={goalProgress(goal, spentTowardGoals)}
+              />
               <span className="muted small">
                 {remaining > 0
                   ? `Faltan ${formatCurrency(remaining, currency, locale)} · ${formatPercent(progress, locale)} de ${formatCurrency(goal, currency, locale)}`
-                  : `¡Todas tus metas cumplidas! ${formatCurrency(total, currency, locale)} ahorrados 🎉`}
+                  : `¡Todas tus metas cumplidas! ${formatCurrency(covered, currency, locale)} cubiertos 🎉`}
               </span>
             </div>
           )}

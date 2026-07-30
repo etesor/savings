@@ -2,7 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import { StoreProvider, useStore } from './state/store';
 import type { Bucket } from './model/types';
-import { bucketBalances } from './model/calculations';
+import { bucketBalances, bucketSpent } from './model/calculations';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { BucketCard } from './components/BucketCard';
@@ -48,6 +48,7 @@ function Shell() {
   }
 
   const balances = bucketBalances(data);
+  const spends = bucketSpent(data);
   const activeBuckets = data.buckets
     .filter((b) => !b.archived)
     .sort((a, b) => a.sortOrder - b.sortOrder);
@@ -131,6 +132,7 @@ function Shell() {
                 <BucketCard
                   bucket={bucket}
                   balance={balances.get(bucket.id) ?? 0}
+                  spent={spends.get(bucket.id) ?? 0}
                   movements={data.movements}
                   currency={data.currency}
                   locale={data.locale}
@@ -151,6 +153,7 @@ function Shell() {
       {modal.kind === 'bucket-create' && (
         <Modal title="Nuevo bucket" onClose={() => setModal({ kind: 'none' })}>
           <BucketForm
+            currency={data.currency}
             locale={data.locale}
             onCreate={addBucket}
             onUpdate={updateBucket}
@@ -163,6 +166,8 @@ function Shell() {
         <Modal title="Editar bucket" onClose={() => setModal({ kind: 'none' })}>
           <BucketForm
             initial={modal.bucket}
+            spent={spends.get(modal.bucket.id) ?? 0}
+            currency={data.currency}
             locale={data.locale}
             onCreate={addBucket}
             onUpdate={updateBucket}

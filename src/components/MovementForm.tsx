@@ -59,6 +59,12 @@ export function MovementForm({
   );
   const [date, setDate] = useState(movement?.date ?? todayISO());
   const [note, setNote] = useState(movement?.note ?? '');
+  // Why the money left. New entries assume it went to what the bucket is for —
+  // that's the common case on a bucket you're saving up for — while editing an
+  // existing entry keeps whatever it already says, so old ones can be relabelled.
+  const [purpose, setPurpose] = useState<'spend' | 'withdrawal'>(
+    movement ? (movement.kind === 'spend' ? 'spend' : 'withdrawal') : 'spend',
+  );
   const [target, setTarget] = useState<number | null>(currentBalance);
   const [targetTouched, setTargetTouched] = useState(false);
 
@@ -77,8 +83,20 @@ export function MovementForm({
   const deltaFromSign = isInitial ? magnitude : sign === 'withdrawal' ? -magnitude : magnitude;
   const signed =
     mode === 'balance' ? roundMoney((target ?? 0) - baseline) : roundMoney(deltaFromSign);
-  const kind: Movement['kind'] =
-    mode === 'balance' ? (signed < 0 ? 'withdrawal' : 'deposit') : isInitial ? 'initial' : sign;
+  // Only a goal-bound "saving up for something" bucket tells spending on the goal
+  // apart from money pulled out for other reasons. On an ongoing fund, or a bucket
+  // with no goal, the answer wouldn't move a single number — so we don't ask.
+  const asksPurpose = bucket.goalType === 'target' && bucket.goalAmount > 0 && !isInitial;
+  const takingOut = mode === 'balance' ? signed < 0 : sign === 'withdrawal';
+  const showPurpose = asksPurpose && takingOut;
+
+  const kind: Movement['kind'] = isInitial
+    ? 'initial'
+    : takingOut
+      ? asksPurpose
+        ? purpose
+        : 'withdrawal'
+      : 'deposit';
 
   const oldAmount = movement?.amount ?? 0;
   const nextBalance = roundMoney(currentBalance - oldAmount + signed);
@@ -180,6 +198,37 @@ export function MovementForm({
         </>
       )}
 
+      {showPurpose && (
+        <div className="field">
+          <span>¿Para qué lo sacaste?</span>
+          <div className="segmented" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={purpose === 'spend'}
+              className={purpose === 'spend' ? 'seg active' : 'seg'}
+              onClick={() => setPurpose('spend')}
+            >
+              Para lo que lo ahorré
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={purpose === 'withdrawal'}
+              className={purpose === 'withdrawal' ? 'seg active seg-withdraw' : 'seg'}
+              onClick={() => setPurpose('withdrawal')}
+            >
+              Para otra cosa
+            </button>
+          </div>
+          <p className="muted small">
+            {purpose === 'spend'
+              ? 'Tu meta sigue cubierta: el dinero hizo lo que tenía que hacer.'
+              : 'Tu avance baja: el dinero se fue a algo distinto de esta meta.'}
+          </p>
+        </div>
+      )}
+
       <label className="field">
         <span>Fecha</span>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -192,11 +241,13 @@ export function MovementForm({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={
-            mode === 'balance'
-              ? 'ej. corte de quincena'
-              : sign === 'withdrawal'
-                ? 'ej. reparación del coche'
-                : 'ej. ahorro mensual'
+            showPurpose && purpose === 'spend'
+              ? 'ej. vuelos'
+              : mode === 'balance'
+                ? 'ej. corte de quincena'
+                : sign === 'withdrawal'
+                  ? 'ej. reparación del coche'
+                  : 'ej. ahorro mensual'
           }
         />
       </label>

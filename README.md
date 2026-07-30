@@ -16,6 +16,12 @@ that **you** own — nothing is ever uploaded to a server.
 ## Features
 
 - Create savings **buckets** with a goal and account (bank or investment/broker).
+- Say what each goal *is*, because it changes what spending means:
+  - **Ahorro para algo** — a trip, a purchase, a payment. When you take money out
+    *for that thing*, the goal stays covered: paying for the flight is the goal working,
+    not the goal slipping.
+  - **Fondo que mantengo** — an emergency fund, car maintenance. Spending it is a hole
+    you have to refill before you're back at your goal.
 - Update a bucket two ways, whichever matches what you have in front of you:
   - **Actualizar saldo** — type the balance you see in your bank account and the app
     works out the movement for you. This is the default: it's what you can read off a
@@ -74,6 +80,23 @@ Everything derives from an append-only list of **movements**; a bucket's balance
 stored, only the sum of its movements. That's what makes the history, totals, and goal
 percentages always consistent. The core logic lives in
 [`src/model/calculations.ts`](./src/model/calculations.ts).
+
+A bucket has two numbers, and they answer different questions:
+
+- **`balance`** — cash actually in it, the sum of every movement. Reconciles against
+  what your bank shows.
+- **`funded`** — how much of the goal is taken care of, and what the progress bar
+  measures. For an `ongoing` bucket that's just the balance. For a `target` bucket it's
+  `balance + spent`, where `spent` sums the movements of kind `spend` — money that left
+  for the very thing you were saving for.
+
+So a withdrawal comes in two flavours: `spend` (went to the purpose; progress holds) and
+`withdrawal` (went elsewhere; progress drops). Both are still negative amounts, so cash
+totals and the history chart don't care about the difference.
+
+Because `spent` is 0 for any bucket that has never had a `spend` movement, `funded`
+collapses to `balance` — which is why files written before this existed load with every
+number unchanged, and why switching a bucket's type is non-destructive and reversible.
 
 ## Privacy note
 
