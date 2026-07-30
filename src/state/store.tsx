@@ -180,13 +180,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // First run on any browser: show the welcome gate so the user makes an
+      // informed choice about where data lives (a real file where the browser
+      // supports it, otherwise browser storage + manual backups).
       if (cancelled) return;
-      if (storage.fsSupported) {
-        setStatus('welcome');
-      } else {
-        setStorageMode('local');
-        setStatus('ready');
-      }
+      setStatus('welcome');
     })();
     return () => {
       cancelled = true;

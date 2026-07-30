@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { APP_NAME } from '../config';
 import { useStore } from '../state/store';
+import { HelpModal } from './HelpModal';
 
 interface HeaderProps {
   onNewBucket: () => void;
@@ -18,6 +19,7 @@ export function Header({ onNewBucket }: HeaderProps) {
     importBackup,
   } = useStore();
   const importInput = useRef<HTMLInputElement>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   async function onImportPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -55,9 +57,14 @@ export function Header({ onNewBucket }: HeaderProps) {
           </button>
         ) : fsSupported ? (
           <div className="chip-group">
-            <span className="chip chip-local" title="Los datos viven solo en este navegador">
+            <button
+              type="button"
+              className="chip chip-local chip-btn"
+              title="Los datos viven solo en este navegador. Clic para saber más."
+              onClick={() => setHelpOpen(true)}
+            >
               <span className="dot warn" /> Solo navegador
-            </span>
+            </button>
             <button type="button" className="btn small ghost" onClick={connectNewFile}>
               Guardar en archivo…
             </button>
@@ -66,9 +73,14 @@ export function Header({ onNewBucket }: HeaderProps) {
             </button>
           </div>
         ) : (
-          <span className="chip chip-local">
+          <button
+            type="button"
+            className="chip chip-local chip-btn"
+            title="Los datos viven solo en este navegador. Clic para saber más."
+            onClick={() => setHelpOpen(true)}
+          >
             <span className="dot warn" /> Solo navegador
-          </span>
+          </button>
         )}
 
         <button type="button" className="btn small ghost" onClick={exportBackup}>
@@ -88,10 +100,21 @@ export function Header({ onNewBucket }: HeaderProps) {
           hidden
           onChange={onImportPick}
         />
+        <button
+          type="button"
+          className="icon-btn help-btn"
+          onClick={() => setHelpOpen(true)}
+          aria-label="Cómo se guardan tus datos"
+          title="Cómo se guardan tus datos"
+        >
+          ?
+        </button>
         <button type="button" className="btn primary" onClick={onNewBucket}>
           + Nuevo bucket
         </button>
       </div>
+
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
     </header>
   );
 }

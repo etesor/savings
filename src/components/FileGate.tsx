@@ -1,13 +1,37 @@
+import { useRef } from 'react';
 import { APP_NAME } from '../config';
 import { useStore } from '../state/store';
 
 /**
  * Shown on first run (choose where data lives) and when a previously connected
  * file needs its permission re-granted after a browser restart.
+ *
+ * Two first-run variants:
+ *   - Browsers with the File System Access API (Chrome/Edge): offer a real,
+ *     auto-saving .json file.
+ *   - Everyone else (Brave, Firefox, Safari, mobile): explain that data lives
+ *     in this browser and let them import an existing backup to start.
  */
 export function FileGate() {
-  const { status, fileName, connectNewFile, connectExistingFile, reconnect, continueLocal } =
-    useStore();
+  const {
+    status,
+    fileName,
+    fsSupported,
+    connectNewFile,
+    connectExistingFile,
+    reconnect,
+    continueLocal,
+    importBackup,
+  } = useStore();
+  const importInput = useRef<HTMLInputElement>(null);
+
+  async function onImportPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    await importBackup(file);
+    continueLocal(); // leave the gate; data now lives in browser storage
+  }
 
   if (status === 'needs-permission') {
     return (
@@ -34,6 +58,46 @@ export function FileGate() {
     );
   }
 
+  // First run, browser WITHOUT the File System Access API.
+  if (!fsSupported) {
+    return (
+      <div className="gate">
+        <div className="gate-card">
+          <span className="gate-icon" aria-hidden>
+            💰
+          </span>
+          <h2>Bienvenido a {APP_NAME}</h2>
+          <p className="muted">
+            Tus ahorros se guardan en este navegador — nada se sube a internet. Este navegador no
+            puede escribir en un archivo automáticamente, así que para conservar una copia usa{' '}
+            <strong>Exportar</strong> cada tanto y guárdala donde prefieras (Dropbox, iCloud, tu
+            disco). Si borras los datos del navegador, se perderá lo que no hayas exportado.
+          </p>
+          <div className="gate-actions">
+            <button type="button" className="btn primary" onClick={continueLocal}>
+              Empezar
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => importInput.current?.click()}
+            >
+              Importar un respaldo…
+            </button>
+          </div>
+          <input
+            ref={importInput}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={onImportPick}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // First run, browser WITH the File System Access API.
   return (
     <div className="gate">
       <div className="gate-card">
